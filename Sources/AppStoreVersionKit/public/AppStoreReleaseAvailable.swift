@@ -3,6 +3,8 @@ import Foundation
 public class AppStoreReleaseAvailable {
     private let service: ReleaseAvailableService = .init()
     
+    public init() {}
+    
     public func checkForUpdates(
         bundleId: String,
         currentVersion: String,
