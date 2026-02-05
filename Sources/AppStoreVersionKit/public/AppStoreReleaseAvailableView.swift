@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-public struct ReleaseAvailableView<IconView: View, ButtonView: View>: View {
+public struct AppStoreReleaseAvailableView<IconView: View, ButtonView: View>: View {
     private let iconSize: Double = 44
     private let title: String
     private let availableVersion: String
@@ -54,7 +54,7 @@ public struct ReleaseAvailableView<IconView: View, ButtonView: View>: View {
 }
 
 // MARK: - Convenience initializer (default icon + button)
-extension ReleaseAvailableView where IconView == EmptyView, ButtonView == AnyView {
+extension AppStoreReleaseAvailableView where IconView == EmptyView, ButtonView == AnyView {
     public init(
         title: String,
         availableVersion: String,
@@ -80,7 +80,7 @@ extension ReleaseAvailableView where IconView == EmptyView, ButtonView == AnyVie
 }
 
 // MARK: - Convenience initializer (custom icon + default button)
-extension ReleaseAvailableView where ButtonView == AnyView {
+extension AppStoreReleaseAvailableView where ButtonView == AnyView {
     public init(
         title: String,
         availableVersion: String,
@@ -136,7 +136,7 @@ internal struct _DefaultUpdateButton: View {
 }
 
 #Preview("Default (convenience)") {
-    ReleaseAvailableView(
+    AppStoreReleaseAvailableView(
         title: "Available Version",
         availableVersion: "1.0.0",
         appName: "App Name",
@@ -147,7 +147,7 @@ internal struct _DefaultUpdateButton: View {
 }
 
 #Preview("Custom icon + button") {
-    ReleaseAvailableView(
+    AppStoreReleaseAvailableView(
         title: "Available Version",
         availableVersion: "1.0.0",
         appName: "App Name",
