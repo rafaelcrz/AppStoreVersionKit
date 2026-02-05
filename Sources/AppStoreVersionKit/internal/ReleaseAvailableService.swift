@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  AppStoreVersionKit
-//
-//  Created by Rafael Felipe de Souza Ramos on 04/02/26.
-//
-
 import Foundation
 
 typealias Response = Result<
