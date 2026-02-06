@@ -14,6 +14,12 @@ public struct AppStoreReleaseAvailableResponse: Codable {
             case appName = "trackName"
         }
         
+        public init(version: String?, releaseNotes: String?, appName: String?) {
+            self.version = version
+            self.releaseNotes = releaseNotes
+            self.appName = appName
+        }
+        
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             version = try container.decodeIfPresent(String.self, forKey: .version)
@@ -21,4 +27,9 @@ public struct AppStoreReleaseAvailableResponse: Codable {
             appName = try container.decodeIfPresent(String.self, forKey: .appName)
         }
     }
+}
+
+public struct AppStoreRelease {
+    public let releaseInfo: AppStoreReleaseAvailableResponse.AvailableRelease
+    public let versionComparison: VersionComparisonResult
 }

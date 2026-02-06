@@ -35,7 +35,7 @@ To integrate using Apple's [Swift Package Manager](https://swift.org/package-man
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rafaelcrz/AppStoreVersionKit.git", from: "1.0.0")
+    .package(url: "https://github.com/rafaelcrz/AppStoreVersionKit.git", from: "1.1.0")
 ]
 ```
 
@@ -43,7 +43,7 @@ Or navigate to your Xcode project then select `Swift Packages`, click the "+" ic
 
 ## Usage
 
-> **Important:** `checkForUpdates` returns `Result.success(let release)` only when the version you pass (`currentVersion`) is **lower** than the version found on the App Store. If the App Store version is equal or older, the result is `.failure(AppStoreReleaseAvailableError.noNewVersionAvailable)`.
+> **Important:** `checkAvailableRelease` returns `Result.success(let release)` with an `AppStoreRelease` that includes both the release info and a semantic version comparison. The `versionComparison` tells you if a new version is available and whether it is a major, minor, or patch update. If the App Store returns no version info or the request fails, the result is `.failure` with an appropriate error.
 
 ### Basic Check
 
@@ -54,18 +54,25 @@ import AppStoreVersionKit
 
 let appStoreChecker = AppStoreReleaseAvailable()
 
-let result = await appStoreChecker.checkForUpdates(
+let result = await appStoreChecker.checkAvailableRelease(
     bundleId: "com.yourapp.bundleid",
     currentVersion: "1.0.0",
     country: "us"
 )
 
 switch result {
-case .success(let availableRelease):
-    if let version = availableRelease.version {
-        print("New version available: \(version)")
-        print("Release Notes: \(availableRelease.releaseNotes ?? "N/A")")
-        print("App Name: \(availableRelease.appName ?? "N/A")")
+case .success(let release):
+    let info = release.releaseInfo
+    if let version = info.version {
+        print("Version from App Store: \(version)")
+        print("Release Notes: \(info.releaseNotes ?? "N/A")")
+        print("App Name: \(info.appName ?? "N/A")")
+    }
+    switch release.versionComparison {
+    case .newVersionAvailable(let updateType):
+        print("New version available: \(updateType) update")
+    case .noNewVersionAvailable:
+        print("App is up to date")
     }
 case .failure(let error):
     print("Error checking for updates: \(error.localizedDescription)")
@@ -74,14 +81,14 @@ case .failure(let error):
 
 ### Using the Default View (SwiftUI)
 
-The package provides a pre-configured view that you can use directly:
+The package provides a pre-configured view that you can use directly. Show the update view **only when** the result is success **and** `versionComparison` is `.newVersionAvailable` (so the user only sees the sheet when there is actually a newer version):
 
 ```swift
 import SwiftUI
 import AppStoreVersionKit
 
 struct ContentView: View {
-    @State private var availableRelease: AppStoreReleaseAvailableResponse.AvailableRelease?
+    @State private var availableRelease: AppStoreRelease?
     @State private var showUpdateView = false
     
     var body: some View {
@@ -92,9 +99,9 @@ struct ContentView: View {
             if let release = availableRelease {
                 AppStoreReleaseAvailableView(
                     title: "New Version Available",
-                    availableVersion: release.version ?? "",
-                    appName: release.appName ?? "App",
-                    releaseNotes: release.releaseNotes ?? "",
+                    availableVersion: release.releaseInfo.version ?? "",
+                    appName: release.releaseInfo.appName ?? "App",
+                    releaseNotes: release.releaseInfo.releaseNotes ?? "",
                     buttonTitle: "Update",
                     onButtonTap: {
                         // Open App Store
@@ -106,13 +113,13 @@ struct ContentView: View {
             }
         }
         .task {
-            await checkForUpdates()
+            await checkAvailableRelease()
         }
     }
     
-    private func checkForUpdates() async {
+    private func checkAvailableRelease() async {
         let checker = AppStoreReleaseAvailable()
-        let result = await checker.checkForUpdates(
+        let result = await checker.checkAvailableRelease(
             bundleId: Bundle.main.bundleIdentifier ?? "",
             currentVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "",
             country: "us"
@@ -120,8 +127,10 @@ struct ContentView: View {
         
         switch result {
         case .success(let release):
-            availableRelease = release
-            showUpdateView = true
+            if case .newVersionAvailable = release.versionComparison {
+                availableRelease = release
+                showUpdateView = true
+            }
         case .failure(let error):
             print("Error: \(error.localizedDescription)")
         }
@@ -131,16 +140,17 @@ struct ContentView: View {
 
 ### Custom View
 
-You can create your own completely custom view using the returned data:
+You can create your own completely custom view using the returned data. Only present it when `release.versionComparison` is `.newVersionAvailable`. Use `release.releaseInfo` for the same fields as before; the comparison also tells you if it's a major, minor, or patch update.
 
 ```swift
 import SwiftUI
 import AppStoreVersionKit
 
 struct CustomUpdateView: View {
-    let release: AppStoreReleaseAvailableResponse.AvailableRelease
+    let release: AppStoreRelease
     
     var body: some View {
+        let info = release.releaseInfo
         VStack(spacing: 20) {
             Image(systemName: "arrow.down.circle.fill")
                 .resizable()
@@ -151,10 +161,10 @@ struct CustomUpdateView: View {
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text("Version \(release.version ?? "")")
+            Text("Version \(info.version ?? "")")
                 .font(.headline)
             
-            if let notes = release.releaseNotes {
+            if let notes = info.releaseNotes {
                 Text(notes)
                     .font(.body)
                     .multilineTextAlignment(.center)
@@ -173,14 +183,14 @@ struct CustomUpdateView: View {
 
 ### Fully Customizable View
 
-For maximum flexibility, you can use the generic view with your own components:
+For maximum flexibility, you can use the generic view with your own components. As with the default view, present it only when the check returns success and `versionComparison` is `.newVersionAvailable`.
 
 ```swift
 AppStoreReleaseAvailableView(
     title: "New Version Available",
-    availableVersion: release.version ?? "",
-    appName: release.appName ?? "App",
-    releaseNotes: release.releaseNotes ?? "",
+    availableVersion: release.releaseInfo.version ?? "",
+    appName: release.releaseInfo.appName ?? "App",
+    releaseNotes: release.releaseInfo.releaseNotes ?? "",
     icon: {
         AsyncImage(url: URL(string: "https://example.com/app-icon.png")) { image in
             image
@@ -220,23 +230,37 @@ The main class for checking available updates on the App Store.
 public class AppStoreReleaseAvailable {
     public init()
     
-    public func checkForUpdates(
+    public func checkAvailableRelease(
         bundleId: String,
         currentVersion: String,
         country: String
-    ) async -> Result<AppStoreReleaseAvailableResponse.AvailableRelease, Error>
+    ) async -> Result<AppStoreRelease, Error>
 }
 ```
 
 #### Parameters
 
 - `bundleId`: Your app's Bundle Identifier (e.g., "com.example.app")
-- `currentVersion`: The current app version (e.g., "1.0.0")
+- `currentVersion`: The current app version (e.g., "1.0.0"). Supports semantic-style versions like "1.0.0", "1.0", or "1".
 - `country`: The country code for the App Store (e.g., "us", "br")
+
+### AppStoreRelease
+
+Returned on success from `checkAvailableRelease`. Contains the release metadata and a semantic version comparison.
+
+```swift
+public struct AppStoreRelease {
+    public let releaseInfo: AppStoreReleaseAvailableResponse.AvailableRelease
+    public let versionComparison: VersionComparisonResult
+}
+```
+
+- `releaseInfo`: Version string, release notes, and app name from the App Store.
+- `versionComparison`: Either `.noNewVersionAvailable` or `.newVersionAvailable(VersionUpdateType)` where `VersionUpdateType` is `.major`, `.minor`, or `.patch`.
 
 ### AppStoreReleaseAvailableResponse.AvailableRelease
 
-Structure containing information about the available version:
+Structure containing information about the available version (also exposed as `release.releaseInfo`):
 
 ```swift
 public struct AvailableRelease: Codable {
@@ -263,7 +287,7 @@ public enum AppStoreReleaseAvailableError: Error, LocalizedError {
 
 ### AppStoreReleaseAvailableView
 
-Optional SwiftUI view to display information about the available update.
+Optional SwiftUI view to display information about the available update. Show this view only when `checkAvailableRelease` returns `.success(release)` and `release.versionComparison` is `.newVersionAvailable`.
 
 #### Convenience Initializer (Default)
 
@@ -331,7 +355,7 @@ struct MyApp: App {
         }
         
         let checker = AppStoreReleaseAvailable()
-        let result = await checker.checkForUpdates(
+        let result = await checker.checkAvailableRelease(
             bundleId: bundleId,
             currentVersion: currentVersion,
             country: "us"
@@ -339,8 +363,10 @@ struct MyApp: App {
         
         switch result {
         case .success(let release):
-            // Display notification or update view
-            print("New version \(release.version ?? "") available!")
+            if case .newVersionAvailable = release.versionComparison {
+                // Display notification or update view only when there is a new version
+                print("New version \(release.releaseInfo.version ?? "") available!")
+            }
         case .failure(let error):
             print("Error: \(error.localizedDescription)")
         }
@@ -366,7 +392,12 @@ class UpdateChecker {
         
         UserDefaults.standard.set(now, forKey: lastCheckKey)
         
-        // Perform check...
+        let result = await checker.checkAvailableRelease(
+            bundleId: Bundle.main.bundleIdentifier ?? "",
+            currentVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "",
+            country: "us"
+        )
+        // Handle result...
     }
 }
 ```

@@ -16,8 +16,11 @@ enum ReleaseApi {
     }
 }
 
+protocol ReleaseAvailableServiceType {
+    func fetchAvailableRelease(bundleId: String, currentVersion: String, country: String) async throws -> Response
+}
 
-final class ReleaseAvailableService {
+final class ReleaseAvailableService: ReleaseAvailableServiceType {
     func fetchAvailableRelease(bundleId: String, currentVersion: String, country: String) async throws -> Response {
         let time: Double = CFAbsoluteTimeGetCurrent()
         
@@ -39,7 +42,7 @@ final class ReleaseAvailableService {
             }
             
             guard let releaseResult = appStoreResponse.results.first else {
-                return .failure(.noNewVersionAvailable)
+                return .failure(.noAppInformationAvailable)
             }
             
             return .success(releaseResult)
