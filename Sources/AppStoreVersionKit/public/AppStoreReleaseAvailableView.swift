@@ -112,14 +112,25 @@ internal struct _DefaultUpdateButton: View {
 
     var body: some View {
         Group {
-            Button(action: onButtonTap) {
-                Text(buttonTitle)
-                    .frame(maxWidth: .infinity)
-                    .padding(8)
-                    .fontWeight(.bold)
-                    .font(.callout)
+            if #available(iOS 26, *) {
+                Button(action: onButtonTap) {
+                    Text(buttonTitle)
+                        .frame(maxWidth: .infinity)
+                        .padding(8)
+                        .fontWeight(.bold)
+                        .font(.callout)
+                }
+                .buttonStyle(.glass(.clear.interactive()))
+            } else {
+                Button(action: onButtonTap) {
+                    Text(buttonTitle)
+                        .frame(maxWidth: .infinity)
+                        .padding(8)
+                        .fontWeight(.bold)
+                        .font(.callout)
+                }
+                .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.borderedProminent)
         }
     }
 }
