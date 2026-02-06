@@ -16,11 +16,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '26.0'
       - name: Build
-        run: xcodebuild build-for-testing -scheme AppStoreVersionKit -destination 'platform=iOS Simulator,name=iPhone 16'
+        run: xcodebuild build-for-testing -scheme AppStoreVersionKit -destination 'platform=iOS Simulator,name=iPhone 17'
       - name: Test
-        run: xcodebuild test-without-building -scheme AppStoreVersionKit -destination 'platform=iOS Simulator,name=iPhone 16'
+        run: xcodebuild test-without-building -scheme AppStoreVersionKit -destination 'platform=iOS Simulator,name=iPhone 17'
