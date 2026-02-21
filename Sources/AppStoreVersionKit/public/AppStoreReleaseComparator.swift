@@ -15,14 +15,14 @@ public enum VersionComparisonResult: Equatable {
     case newVersionAvailable(SemanticVersionType)
 }
 
-enum AppStoreReleaseComparator {
+public enum AppStoreReleaseComparator {
 
     /// Compares the current version with the available version and returns whether a new version exists and its type (major, minor, or patch).
     /// - Parameters:
     ///   - current: Current version (e.g. "1.0.0", "1", "1.0")
     ///   - available: Available version (e.g. "1.0.0", "2.1.0")
     /// - Returns: `.noNewVersionAvailable` when there is no new version; `.newVersionAvailable(.major/.minor/.patch)` otherwise.
-    static func compare(current: String, available: String) -> VersionComparisonResult {
+    public static func compare(current: String, available: String) -> VersionComparisonResult {
         let currentComponents = parseVersion(current)
         let availableComponents = parseVersion(available)
 
@@ -50,7 +50,7 @@ enum AppStoreReleaseComparator {
         return .noNewVersionAvailable
     }
 
-    static func isNewVersionAvailable(current: String, available: String) -> Bool {
+    public static func isNewVersionAvailable(current: String, available: String) -> Bool {
         switch compare(current: current, available: available) {
         case .newVersionAvailable:
             return true
