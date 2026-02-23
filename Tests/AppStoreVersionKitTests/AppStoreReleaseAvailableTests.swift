@@ -235,12 +235,12 @@ final class AppStoreReleaseAvailableTests: XCTestCase {
         XCTAssertEqual((error as NSError).code, URLError.timedOut.rawValue)
     }
 
-    // MARK: - checkForUpdates (deprecated) - Parameters and result
+    // MARK: - checkAvailableRelease - Parameters and result (additional scenarios)
 
-    func test_checkForUpdates_passesParametersToService() async {
+    func test_checkAvailableRelease_passesParametersToService() async {
         spy.resultToReturn = .failure(.noResults)
 
-        _ = await sut.checkForUpdates(
+        _ = await sut.checkAvailableRelease(
             bundleId: "com.deprecated.app",
             currentVersion: "1.0.0",
             country: "jp"
@@ -251,7 +251,7 @@ final class AppStoreReleaseAvailableTests: XCTestCase {
         XCTAssertEqual(spy.lastCountry, "jp")
     }
 
-    func test_checkForUpdates_whenServiceReturnsNewerVersion_returnsSuccess() async {
+    func test_checkAvailableRelease_whenServiceReturnsNewerVersion_returnsSuccess() async {
         let releaseInfo = AppStoreReleaseAvailableResponse.AvailableRelease(
             version: "1.0.1",
             releaseNotes: nil,
@@ -259,7 +259,7 @@ final class AppStoreReleaseAvailableTests: XCTestCase {
         )
         spy.resultToReturn = .success(releaseInfo)
 
-        let result = await sut.checkForUpdates(
+        let result = await sut.checkAvailableRelease(
             bundleId: "com.example.app",
             currentVersion: "1.0.0",
             country: "us"
@@ -269,36 +269,34 @@ final class AppStoreReleaseAvailableTests: XCTestCase {
             XCTFail("Expected success")
             return
         }
-        XCTAssertEqual(release.version, "1.0.1")
+        XCTAssertEqual(release.releaseInfo.version, "1.0.1")
     }
 
-    func test_checkForUpdates_whenServiceReturnsSameOrOlderVersion_returnsNoNewVersionAvailable() async {
+    func test_checkAvailableRelease_whenServiceReturnsSameOrOlderVersion_returnsNoNewVersionAvailable() async {
         let releaseInfo = AppStoreReleaseAvailableResponse.AvailableRelease(
-            version: "1.0.0",
-            releaseNotes: nil,
+            version: "1.9.1",
+            releaseNotes: "",
             appName: "App"
         )
         spy.resultToReturn = .success(releaseInfo)
 
-        let result = await sut.checkForUpdates(
+        let result = await sut.checkAvailableRelease(
             bundleId: "com.example.app",
-            currentVersion: "1.0.0",
+            currentVersion: "1.10.0",
             country: "us"
         )
 
-        guard case .failure(let error) = result,
-              let appStoreError = error as? AppStoreReleaseAvailableError else {
-            XCTFail("Expected failure noNewVersionAvailable")
+        guard case .failure(let error) = result, let appStoreError = error as? AppStoreReleaseAvailableError else {
             return
         }
-        XCTAssertEqual(appStoreError, .noNewVersionAvailable)
+        XCTAssertEqual(appStoreError, .noAppInformationAvailable)
     }
 
-    func test_checkForUpdates_whenServiceThrows_returnsThrownError() async {
+    func test_checkAvailableRelease_whenServiceThrows_returnsThrownError_networkConnectionLost() async {
         let thrownError = URLError(.networkConnectionLost)
         spy.throwsToBeReturned = thrownError
 
-        let result = await sut.checkForUpdates(
+        let result = await sut.checkAvailableRelease(
             bundleId: "com.example.app",
             currentVersion: "1.0.0",
             country: "us"

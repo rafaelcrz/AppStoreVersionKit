@@ -14,7 +14,7 @@ final class ReleaseAvailableServiceSpy: ReleaseAvailableServiceType {
     private(set) var lastCurrentVersion: String?
     private(set) var lastCountry: String?
 
-    var resultToReturn: Response = .failure(.noNewVersionAvailable)
+    var resultToReturn: Response = .failure(.noAppInformationAvailable)
     /// When non-nil, the spy throws this error instead of returning `resultToReturn`.
     var throwsToBeReturned: Error?
 

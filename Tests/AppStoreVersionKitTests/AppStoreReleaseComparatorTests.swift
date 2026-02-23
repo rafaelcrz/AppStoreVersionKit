@@ -53,7 +53,7 @@ final class AppStoreReleaseComparatorTests: XCTestCase {
     }
 
     func testIsNewVersionAvailableTrue() {
-        XCTAssertTrue(AppStoreReleaseComparator.isNewVersionAvailable(current: "1.0.0", available: "1.0.1"))
+        XCTAssertTrue(AppStoreReleaseComparator.isNewVersionAvailable(current: "1.9.1", available: "1.10.0"))
         XCTAssertTrue(AppStoreReleaseComparator.isNewVersionAvailable(current: "1.0.0", available: "1.1.0"))
         XCTAssertTrue(AppStoreReleaseComparator.isNewVersionAvailable(current: "1.0.0", available: "2.0.0"))
     }
