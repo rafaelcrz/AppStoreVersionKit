@@ -9,10 +9,18 @@ public enum SemanticVersionType: Equatable {
 
 /// Result of comparing the current version with the available version.
 public enum VersionComparisonResult: Equatable {
-    /// No new version available (current >= available).
-    case noNewVersionAvailable
+    /// No new version available, with the reason (same version or available is older than current).
+    case noNewVersionAvailable(NoNewVersionReason)
     /// A new version is available and the update type (major, minor, or patch).
     case newVersionAvailable(SemanticVersionType)
+
+    /// Reason why there is no new version.
+    public enum NoNewVersionReason: Equatable {
+        /// Current and available versions are equal.
+        case sameVersion
+        /// Available version is lower than the current version.
+        case availableVersionOlder
+    }
 }
 
 public enum AppStoreReleaseComparator {
@@ -21,7 +29,7 @@ public enum AppStoreReleaseComparator {
     /// - Parameters:
     ///   - current: Current version (e.g. "1.0.0", "1", "1.0")
     ///   - available: Available version (e.g. "1.0.0", "2.1.0")
-    /// - Returns: `.noNewVersionAvailable` when there is no new version; `.newVersionAvailable(.major/.minor/.patch)` otherwise.
+    /// - Returns: `.noNewVersionAvailable(.sameVersion)` or `.noNewVersionAvailable(.availableVersionOlder)` when there is no new version; `.newVersionAvailable(.major/.minor/.patch)` otherwise.
     public static func compare(current: String, available: String) -> VersionComparisonResult {
         let currentComponents = parseVersion(current)
         let availableComponents = parseVersion(available)
@@ -33,21 +41,24 @@ public enum AppStoreReleaseComparator {
             return .newVersionAvailable(.major)
         }
         if aMajor < cMajor {
-            return .noNewVersionAvailable
+            return .noNewVersionAvailable(.availableVersionOlder)
         }
 
         if aMinor > cMinor {
             return .newVersionAvailable(.minor)
         }
         if aMinor < cMinor {
-            return .noNewVersionAvailable
+            return .noNewVersionAvailable(.availableVersionOlder)
         }
 
         if aPatch > cPatch {
             return .newVersionAvailable(.patch)
         }
+        if aPatch < cPatch {
+            return .noNewVersionAvailable(.availableVersionOlder)
+        }
 
-        return .noNewVersionAvailable
+        return .noNewVersionAvailable(.sameVersion)
     }
 
     public static func isNewVersionAvailable(current: String, available: String) -> Bool {
