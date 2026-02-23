@@ -158,7 +158,7 @@ final class AppStoreReleaseAvailableTests: XCTestCase {
             XCTFail("Expected success with noNewVersionAvailable comparison")
             return
         }
-        XCTAssertEqual(release.versionComparison, .noNewVersionAvailable)
+        XCTAssertEqual(release.versionComparison, .noNewVersionAvailable(.sameVersion))
     }
 
     // MARK: - checkAvailableRelease - Result failure

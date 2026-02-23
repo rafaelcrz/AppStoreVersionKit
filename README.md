@@ -43,7 +43,7 @@ Or navigate to your Xcode project then select `Swift Packages`, click the "+" ic
 
 ## Usage
 
-> **Important:** `checkAvailableRelease` returns `Result.success(let release)` with an `AppStoreRelease` that includes both the release info and a semantic version comparison. The `versionComparison` tells you if a new version is available and whether it is a major, minor, or patch update. If the App Store returns no version info or the request fails, the result is `.failure` with an appropriate error.
+> **Important:** `checkAvailableRelease` returns `Result.success(let release)` with an `AppStoreRelease` that includes both the release info and a semantic version comparison. The `versionComparison` tells you if a new version is available (major, minor, or patch) or, when there isn’t, the reason: same version or available version older than current. If the App Store returns no version info or the request fails, the result is `.failure` with an appropriate error.
 
 ### Basic Check
 
@@ -71,8 +71,13 @@ case .success(let release):
     switch release.versionComparison {
     case .newVersionAvailable(let updateType):
         print("New version available: \(updateType) update")
-    case .noNewVersionAvailable:
-        print("App is up to date")
+    case .noNewVersionAvailable(let reason):
+        switch reason {
+        case .sameVersion:
+            print("App is up to date (same version)")
+        case .availableVersionOlder:
+            print("App is up to date (current is newer than store)")
+        }
     }
 case .failure(let error):
     print("Error checking for updates: \(error.localizedDescription)")
@@ -256,7 +261,7 @@ public struct AppStoreRelease {
 ```
 
 - `releaseInfo`: Version string, release notes, and app name from the App Store.
-- `versionComparison`: Either `.noNewVersionAvailable` or `.newVersionAvailable(VersionUpdateType)` where `VersionUpdateType` is `.major`, `.minor`, or `.patch`.
+- `versionComparison`: Either `.noNewVersionAvailable(NoNewVersionReason)` or `.newVersionAvailable(SemanticVersionType)`. `NoNewVersionReason` is `.sameVersion` (current == available) or `.availableVersionOlder` (available < current). `SemanticVersionType` is `.major`, `.minor`, or `.patch`.
 
 ### AppStoreReleaseAvailableResponse.AvailableRelease
 
