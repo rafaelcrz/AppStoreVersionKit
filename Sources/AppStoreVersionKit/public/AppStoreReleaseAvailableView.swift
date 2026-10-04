@@ -112,7 +112,7 @@ internal struct _DefaultUpdateButton: View {
 
     var body: some View {
         Group {
-            if #available(iOS 26, *) {
+            if #available(iOS 26, macOS 26, *) {
                 Button(action: onButtonTap) {
                     Text(buttonTitle)
                         .frame(maxWidth: .infinity)
